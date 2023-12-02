@@ -88,8 +88,10 @@ def main_func(activation, data_path, save_path, batch_size, epochs, layer_sizes,
         np.random.seed(i)
         
         train_loader, test_loader, act_full_loader = prepare_data(data_path, test_size, i, batch_size)
-
+        
+        print ("Layer sizes:", layer_sizes)
         model = FNN(layer_sizes, activation=activation, seed=i).to(device)
+        print ("Loaded model to", str(device)) 
         optimizer = optim.Adam(model.parameters(), lr=0.0004)
         tr = Trainer(loss_function, epochs, model, optimizer, device)
         print("Start Training...")
@@ -107,7 +109,6 @@ def main_func(activation, data_path, save_path, batch_size, epochs, layer_sizes,
         if args.save_max_vals:
             print("Saving max activation values...")
             with open(save_path + '/max_values{}_{}.pickle'.format(i, batch_size), 'wb') as f:
-                print(np.array(tr.max_value_layers_mi).max())
                 pickle.dump(tr.max_value_layers_mi, f, protocol=pickle.HIGHEST_PROTOCOL)
                 f.close()
 
@@ -117,7 +118,7 @@ def main_func(activation, data_path, save_path, batch_size, epochs, layer_sizes,
                 if "variable" in mi_methods:
                     max_value = info_utils.get_max_value(tr.hidden_activations)
                     num_bins = int(max_value*15)
-                    mutual_inf = MI(tr.hidden_activations, act_full_loader,act=activation, num_of_bins=j)
+                    mutual_inf = MI(tr.hidden_activations, act_full_loader,act=activation, num_of_bins=j, y_pred=tr.y_pred)
                     MI_XH, MI_YH = mutual_inf.get_mi(method="fixed")
                     with open(save_path + '/MI_XH_MI_YH_run_{}_{}_{}variable.pickle'.format(i, batch_size, j), 'wb') as f:
                         pickle.dump([MI_XH, MI_YH], f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -125,7 +126,7 @@ def main_func(activation, data_path, save_path, batch_size, epochs, layer_sizes,
 
 
                 if "fixed" in mi_methods:
-                    mutual_inf = MI(tr.hidden_activations, act_full_loader,act=activation, num_of_bins=j)
+                    mutual_inf = MI(tr.hidden_activations, act_full_loader,act=activation, num_of_bins=j, y_pred=tr.y_pred)
                     MI_XH, MI_YH = mutual_inf.get_mi(method="fixed")
 
                     with open(save_path + '/MI_XH_MI_YH_run_{}_{}_{}bins.pickle'.format(i, batch_size, j), 'wb') as f:
@@ -133,7 +134,7 @@ def main_func(activation, data_path, save_path, batch_size, epochs, layer_sizes,
                         f.close()
                 
                 if "adaptive" in mi_methods:
-                    mutual_inf = MI(tr.hidden_activations, act_full_loader,act=activation, num_of_bins=j)
+                    mutual_inf = MI(tr.hidden_activations, act_full_loader,act=activation, num_of_bins=j, y_pred=tr.y_pred)
                     MI_XH, MI_YH = mutual_inf.get_mi(method="adaptive")
 
                     with open(save_path + '/MI_XH_MI_YH_run_{}_{}_{}adaptive.pickle'.format(i, batch_size, j), 'wb') as f:
@@ -142,7 +143,6 @@ def main_func(activation, data_path, save_path, batch_size, epochs, layer_sizes,
 
         minv, maxv = info_utils.get_min_max_vals(activation, tr.hidden_activations)
         max_values.append(maxv)
-        print(max_values)
 
         # Need to delete everything from memory
         # because python will keep things in memory until computation of overwriting

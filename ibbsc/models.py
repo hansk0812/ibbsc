@@ -11,7 +11,8 @@ activations_functions = {
     "relu" : F.relu,
     "relu6" : F.relu6,
     "elu" : F.elu,
-    "linear" : "linear"
+    "linear" : "linear",
+    "lrelu" : F.leaky_relu
 }
 
 
@@ -22,7 +23,7 @@ class FNN(nn.Module):
         self.activation = activation
         self.num_layers = len(layer_sizes)
         self.inp_size = layer_sizes[0]
-
+        
         in_out_pairs = [(layer_sizes[i], layer_sizes[i+1]) for i in range(len(layer_sizes)-1)]
         self.linears = nn.ModuleList([nn.Linear(*pair) for pair in in_out_pairs])
     

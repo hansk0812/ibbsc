@@ -100,5 +100,19 @@ def get_bins_layers(activations, num_bins, act):
                 lb.extend(borders)
                 lb.append(sorted_ua[-1])
             epoch_bins.append(np.array(lb))
-        bins.append(epoch_bins)    
+        bins.append(epoch_bins) 
+   
+    # 2 x 5 x 32 
+    shape1 = None
+    for bin_idx, bin_ in enumerate(bins):
+        for b_idx, b in enumerate(bin_):
+            if shape1 is None or shape1 != (1,):  
+                shape1 = b.shape
+            elif shape1 == (1,):
+                save = bin_[b_idx-1][0]
+                bins[bin_idx][b_idx-1] = np.zeros(b.shape)
+                print (bins[bin_idx][b_idx-1], save, shape1)
+                bins[bin_idx][b_idx-1][b.shape[0]//2] = save 
+    print ([[x.shape for x in y] for y in bins])
+
     return np.array(bins)

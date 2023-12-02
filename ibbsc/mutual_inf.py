@@ -6,7 +6,7 @@ from custom_exceptions import MIMethodError
 
 
 class MI:
-    def __init__(self, activity, data_loader, act, num_of_bins):
+    def __init__(self, activity, data_loader, act, num_of_bins, y_pred=None):
         self.activity = activity
         self.num_of_bins = num_of_bins
         self.act=act
@@ -22,8 +22,13 @@ class MI:
         self.y_onehot = np.eye(classes)[self.y_flat.astype("int")]
         nb_classes = self.y_onehot[0]
         self.y_idx_label = {x : None for x in nb_classes}
-        for i in self.y_idx_label:
-            self.y_idx_label[i] = i == self.y_flat
+            
+        if y_pred is None:
+            for i in self.y_idx_label:
+                self.y_idx_label[i] = i == self.y_flat
+        else:
+            for i in self.y_idx_label:
+                self.y_idx_label[i] = i == y_pred
 
         # Save a dict with the indicies corresponding to the same input patterns
         # NOTE: for the IB dataset all patterns occur once, so this can be removed for a 
@@ -44,6 +49,7 @@ class MI:
         Returns:
             prob_hidden_layers: p(t) - prob dist. for the hidden layers.
         """
+        print (bins)
         binned = np.digitize(activations, bins)
         _, unique_layers = np.unique(binned, axis=0, return_counts=True)
         prob_hidden_layers = unique_layers / sum(unique_layers)
@@ -56,6 +62,7 @@ class MI:
 
 
     def cond_entropy(self, cond_bool, activations_layer, bins):
+        cond_bool = {x: cond_bool[x].cpu().numpy() for x in cond_bool}
         return sum([self.entropy(bins, activations_layer[inds,:]) * inds.mean() for inds in cond_bool.values()])
 
     
@@ -64,7 +71,7 @@ class MI:
         entropy_layer_output = self.cond_entropy(cond_bool, activations_layer, bins) # \sum_y Pr[Y=y] * H(T|Y=y)
         # Note that H(T|X) = 0 so I(X;T) = H(T). Thus the below is not needed.
         # If the IB dataset is not used uncomment the line below.
-        #entropy_layer_input = sum([self.entropy(bins, activations_layer[inds,:]) * inds.mean() for inds in self.x_idx_patterns.values()])
+        entropy_layer_input = sum([self.entropy(bins, activations_layer[inds,:]) * inds.mean() for inds in self.x_idx_patterns.values()])
         return entropy_layer, (entropy_layer - entropy_layer_output)
 
     

@@ -50,7 +50,7 @@ class Trainer:
             self.max_value_layers_mi.append(cur_epoch_max)
         return
         
-    def evaluate(self, loader, epoch, val=False):
+    def evaluate(self, loader, epoch, val=False, y_pred=False):
         """
         TODO: This function is poorly named.
         If the val flag is set to true it will pass the test data through the model.
@@ -63,6 +63,7 @@ class Trainer:
             loader: Dataloader object 
             epoch: Int with the current epoch number
             val: flag to indicate if the test data should be passed through the model . Defaults to False.
+            y_pred: Flag to use y_pred for MI estimation instead of y_gt
 
         Returns:
             v_loss: loss over the data fed through the model
@@ -71,18 +72,21 @@ class Trainer:
         self.model.eval()
         v_loss = 0
         acc = 0
+        yhat_softmaxes = []
         with torch.no_grad(): # Speeds up very little by turning autograd engine off.
             if val:
                 for data, label in loader:
                     data, label= data.to(self.device), label.long().to(self.device)
                     yhat, yhat_softmax, activations = self.model(data)
+                    yhat_softmaxes.append(yhat_softmax)
                     v_loss += self.loss_function(yhat, label).item()
                     acc += self.get_number_correct(yhat_softmax, label)
             else:
                 data, label = loader.dataset.tensors[0].to(self.device), loader.dataset.tensors[1].long().to(self.device)
                 yhat, yhat_softmax, activations = self.model(data)
+                yhat_softmaxes.append(yhat_softmax)
                 v_loss += self.loss_function(yhat, label).item()
-                
+            
         v_loss = v_loss / len(loader.dataset)
         if val:
             acc = acc / float(len(loader.dataset))
@@ -92,16 +96,29 @@ class Trainer:
             self.val_loss.append(v_loss)
         else:
             self.full_loss.append(v_loss)
+
+        if y_pred:
+            return v_loss, list(map(lambda x:x.cpu().numpy(), activations)), yhat_softmaxes
+
         return v_loss, list(map(lambda x:x.cpu().numpy(), activations))
     
     
-    def save_act_loader(self, loader, epoch):
+    def save_act_loader(self, loader, epoch, y_pred=False):
         """
         If we want to save the activity after each epoch for more that one dataset.
         I.e some papers save activity for both train, test and test+train. 
         Note that the order is important here. TODO: change loaders to be a dict.
         """
-        _, act = self.evaluate(loader, epoch)
+        if not y_pred:
+            _, act = self.evaluate(loader, epoch)
+            self.y_pred = None
+        else:
+            _, act, yhat_softmax = self.evaluate(loader, epoch, y_pred=y_pred)
+            
+            yhat_softmax = torch.reshape(torch.stack(yhat_softmax, dim=0), (-1, 10))
+            yhat = torch.argmax(yhat_softmax, dim=-1)
+            self.y_pred = yhat
+
         self.hidden_activations.append(act)
         self.get_max_val(act, mi=True)
 
@@ -148,8 +165,8 @@ class Trainer:
             ### STOP MAIN TRAIN LOOP ###
         
             ### RUN ON TEST DATA ###
-            self.evaluate(test_loader, epoch, val=True)[0]
+            self.evaluate(test_loader, epoch, val=True, y_pred=True)[0]
             ### SAVE ACTIVATION ON FULL DATA ###
-            self.save_act_loader(act_loader, epoch)
+            self.save_act_loader(act_loader, epoch, y_pred=True)
             if epoch % 100 == 0:
-                print("-"*50)
+               print("-"*50)
