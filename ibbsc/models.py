@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 from custom_exceptions import ActivationError
 
-
+from torchvision.models import vgg16_bn
 
 # Supported activation functions for hidden layers except output
 activations_functions = {
@@ -15,6 +15,37 @@ activations_functions = {
     "lrelu" : F.leaky_relu
 }
 
+class VGG(nn.Module):
+    #vgg["features"][0,3,7,10,14,17,20,24,27,30,34,37,40], vgg["classifier"][0,3,6]
+    #[(3,64),(64,64),(64,128),(128,128),(128,256),(256,256),(256,256),(256,512),(512,512),(512,512),(512,512),(512,512),(512,512)]
+    #[(25088,4096),(4096,4096),(4096,1000)]
+
+    def __init__(self, vgg_net, num_classes=10):
+        super().__init__()
+        self.vgg_net = vgg_net
+        self.final_layer = nn.Linear(4096, num_classes)
+
+        self.layer_indices = [(2,5,9,12,16,19,22,26,29,32,36,39,42), (2,5,8)]
+
+    def forward(self, x):
+        
+        features, pool, classifier = self.vgg_net.children()
+        
+        activations = []
+
+        for idx, feat in enumerate(features):
+            x = feat(x) 
+            if idx in self.layer_indices[0]:
+                activations.append(x)
+        x = pool(x)
+        x = x.reshape((x.shape[0], -1))
+        for idx, feat in enumerate(classifier):
+            x = feat(x)
+            if idx in self.layer_indices[1]:
+                activations.append(x)
+        x_softmax = F.softmax(x, dim=-1)
+
+        return x, x_softmax, activations
 
 class FNN(nn.Module):
     def __init__(self, layer_sizes, activation="tanh", seed=0):
@@ -47,3 +78,4 @@ class FNN(nn.Module):
             activations.append(x_softmax) 
             
         return x, x_softmax, activations
+

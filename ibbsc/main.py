@@ -15,6 +15,7 @@ import tqdm
 import os 
 import default_params
 
+from torchvision.models import vgg16_bn
 
 def check_for_data(save_path):
     """
@@ -90,8 +91,13 @@ def main_func(activation, data_path, save_path, batch_size, epochs, layer_sizes,
         train_loader, test_loader, act_full_loader = prepare_data(data_path, test_size, i, batch_size)
         
         print ("Layer sizes:", layer_sizes)
-        model = FNN(layer_sizes, activation=activation, seed=i).to(device)
+        
+        if args.conv:
+            model = vgg16_bn(10)
+        else:
+            model = FNN(layer_sizes, activation=activation, seed=i).to(device)
         print ("Loaded model to", str(device)) 
+        
         optimizer = optim.Adam(model.parameters(), lr=0.0004)
         tr = Trainer(loss_function, epochs, model, optimizer, device, args.y_pred)
         print("Start Training...")

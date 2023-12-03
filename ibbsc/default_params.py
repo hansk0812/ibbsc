@@ -56,6 +56,9 @@ def default_params():
                     
     parser.add_argument("--y_pred", "-yp", dest="y_pred", action="store_true",
                         help="Use y_pred for MI calculation.") 
+    
+    parser.add_argument("--conv", "-cv", dest="conv", action="store_true",
+                        help="Use flag to switch to VGG16bn.") 
     args = parser.parse_args()
 
     args.mi_methods = [x.strip() for x in re.findall(r'\[(.*?)\]', args.mi_methods)[0].split(",")]   
