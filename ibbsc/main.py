@@ -93,7 +93,7 @@ def main_func(activation, data_path, save_path, batch_size, epochs, layer_sizes,
         model = FNN(layer_sizes, activation=activation, seed=i).to(device)
         print ("Loaded model to", str(device)) 
         optimizer = optim.Adam(model.parameters(), lr=0.0004)
-        tr = Trainer(loss_function, epochs, model, optimizer, device)
+        tr = Trainer(loss_function, epochs, model, optimizer, device, args.y_pred)
         print("Start Training...")
         tr.train(train_loader, test_loader, act_full_loader)
 

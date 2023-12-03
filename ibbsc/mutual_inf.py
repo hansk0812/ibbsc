@@ -49,7 +49,7 @@ class MI:
         Returns:
             prob_hidden_layers: p(t) - prob dist. for the hidden layers.
         """
-        print (bins)
+        bins = np.sort(bins, -1)
         binned = np.digitize(activations, bins)
         _, unique_layers = np.unique(binned, axis=0, return_counts=True)
         prob_hidden_layers = unique_layers / sum(unique_layers)
@@ -80,7 +80,6 @@ class MI:
         all_MI_YH = [] # Contains I(Y;T) and stores it as (epoch_num, layer_num
         if method == "fixed":
             bins = np.linspace(self.min_val, self.max_val, self.num_of_bins)
-            print(self.min_val, self.max_val, self.num_of_bins)
         elif method == "adaptive":
             adapt_bins = info_utils.get_bins_layers(self.activity, self.num_of_bins, self.act)
         else:

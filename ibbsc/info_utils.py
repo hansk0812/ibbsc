@@ -111,8 +111,6 @@ def get_bins_layers(activations, num_bins, act):
             elif shape1 == (1,):
                 save = bin_[b_idx-1][0]
                 bins[bin_idx][b_idx-1] = np.zeros(b.shape)
-                print (bins[bin_idx][b_idx-1], save, shape1)
                 bins[bin_idx][b_idx-1][b.shape[0]//2] = save 
-    print ([[x.shape for x in y] for y in bins])
 
     return np.array(bins)

@@ -21,7 +21,7 @@ def default_params():
     parser.add_argument("--epochs", "-e", dest="epochs", default=8000,
                         type=int, help="Number of epochs to run")
 
-    parser.add_argument("--num_runs","-num", dest="num_runs", default=40,
+    parser.add_argument("--num_runs","-num", dest="num_runs", default=1,
                         type=int, help="Number of times to run the network")  
 
     parser.add_argument("--mi_methods", "-mi", dest="mi_methods", default="[adaptive]",
@@ -54,6 +54,8 @@ def default_params():
     parser.add_argument("--test_size", "-ts", dest="test_size", default=819,
                         type=int, help="Number of test samples to include. Can be a float indicating a percentage or an int indicating number of samples.") 
                     
+    parser.add_argument("--y_pred", "-yp", dest="y_pred", action="store_true",
+                        help="Use y_pred for MI calculation.") 
     args = parser.parse_args()
 
     args.mi_methods = [x.strip() for x in re.findall(r'\[(.*?)\]', args.mi_methods)[0].split(",")]   

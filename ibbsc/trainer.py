@@ -7,7 +7,7 @@ import tqdm
 
 
 class Trainer:
-    def __init__(self, loss, epochs, model, optimizer, device):
+    def __init__(self, loss, epochs, model, optimizer, device, y_pred):
         self.opt = optimizer
         self.device = device
         self.loss_function = loss
@@ -19,6 +19,7 @@ class Trainer:
         self.full_loss = []
         self.error_train = []
         self.error_test = []
+        self.y_pred = y_pred
         self.max_value_layers_train = [] # should be of size (num_epochs, depth network)
         self.max_value_layers_mi = [] # should be of size (num_epochs, depth network)
         #self.weights = dict() #  Not currently in use, but if plot of grad of weights are needed we need this
@@ -50,7 +51,7 @@ class Trainer:
             self.max_value_layers_mi.append(cur_epoch_max)
         return
         
-    def evaluate(self, loader, epoch, val=False, y_pred=False):
+    def evaluate(self, loader, epoch, val=False):
         """
         TODO: This function is poorly named.
         If the val flag is set to true it will pass the test data through the model.
@@ -97,23 +98,22 @@ class Trainer:
         else:
             self.full_loss.append(v_loss)
 
-        if y_pred:
+        if not self.y_pred is None:
             return v_loss, list(map(lambda x:x.cpu().numpy(), activations)), yhat_softmaxes
 
         return v_loss, list(map(lambda x:x.cpu().numpy(), activations))
     
     
-    def save_act_loader(self, loader, epoch, y_pred=False):
+    def save_act_loader(self, loader, epoch):
         """
         If we want to save the activity after each epoch for more that one dataset.
         I.e some papers save activity for both train, test and test+train. 
         Note that the order is important here. TODO: change loaders to be a dict.
         """
-        if not y_pred:
+        if self.y_pred is None:
             _, act = self.evaluate(loader, epoch)
-            self.y_pred = None
         else:
-            _, act, yhat_softmax = self.evaluate(loader, epoch, y_pred=y_pred)
+            _, act, yhat_softmax = self.evaluate(loader, epoch)
             
             yhat_softmax = torch.reshape(torch.stack(yhat_softmax, dim=0), (-1, 10))
             yhat = torch.argmax(yhat_softmax, dim=-1)
@@ -165,8 +165,8 @@ class Trainer:
             ### STOP MAIN TRAIN LOOP ###
         
             ### RUN ON TEST DATA ###
-            self.evaluate(test_loader, epoch, val=True, y_pred=True)[0]
+            self.evaluate(test_loader, epoch, val=True)[0]
             ### SAVE ACTIVATION ON FULL DATA ###
-            self.save_act_loader(act_loader, epoch, y_pred=True)
+            self.save_act_loader(act_loader, epoch)
             if epoch % 100 == 0:
                print("-"*50)
