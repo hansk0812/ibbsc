@@ -6,7 +6,7 @@ import data_utils
 from torch import optim
 import info_utils
 import numpy as np
-from models import FNN
+from models import FNN, VGG
 import plot_utils
 import torch 
 from torch import nn
@@ -15,7 +15,9 @@ import tqdm
 import os 
 import default_params
 
-from torchvision.models import vgg16_bn
+from data_utils import MNIST
+from torchvision import transforms
+from torch.utils.data import DataLoader
 
 def check_for_data(save_path):
     """
@@ -37,7 +39,7 @@ def check_for_data(save_path):
         os.mkdir(save_path)
 
 
-def prepare_data(data_path, test_size, seed, batch_size):
+def prepare_data(data_path, test_size, seed, batch_size, device="cpu"):
     """
     Prepare the dataloaders for the training. These are also passed to the MI
     constructor and unpacked in the MI class to compute the mutual information
@@ -50,15 +52,26 @@ def prepare_data(data_path, test_size, seed, batch_size):
     Returns:
         [type]: [description]
     """
-    X_train, X_test, y_train, y_test = data_utils.load_data(data_path, test_size, seed)
 
-    # Prepare data for pytorch
-    if batch_size != "full":
-        train_loader = data_utils.create_dataloader(X_train, y_train, batch_size, seed)
-        test_loader = data_utils.create_dataloader(X_test, y_test, batch_size, seed)
+    if not args.conv:
+        X_train, X_test, y_train, y_test = data_utils.load_data(data_path, test_size, seed)
+        
+        # Prepare data for pytorch
+        if batch_size != "full":
+            train_loader = data_utils.create_dataloader(X_train, y_train, batch_size, seed)
+            test_loader = data_utils.create_dataloader(X_test, y_test, batch_size, seed)
+        else:
+            train_loader = data_utils.create_dataloader(X_train, y_train, len(X_train), seed)
+            test_loader = data_utils.create_dataloader(X_test, y_test, len(X_test), seed)
+    
     else:
-        train_loader = data_utils.create_dataloader(X_train, y_train, len(X_train), seed)
-        test_loader = data_utils.create_dataloader(X_test, y_test, len(X_test), seed)
+        train_dataset, test_dataset = data_utils.load_data(data_path, test_size, seed, default=False)
+        
+        train_loader = DataLoader(train_dataset, batch_size=256)
+        test_loader = DataLoader(test_dataset, batch_size=256)
+        
+        X_train, y_train = train_dataset.train_data 
+        X_test, y_test = test_dataset.test_data
 
     # Activitiy loaders
     full_X, full_y = np.concatenate((X_train, X_test)), np.concatenate((y_train, y_test))
@@ -88,13 +101,13 @@ def main_func(activation, data_path, save_path, batch_size, epochs, layer_sizes,
         torch.cuda.manual_seed(i)
         np.random.seed(i)
         
-        train_loader, test_loader, act_full_loader = prepare_data(data_path, test_size, i, batch_size)
+        train_loader, test_loader, act_full_loader = prepare_data(data_path, test_size, i, batch_size, device=device)
         
-        print ("Layer sizes:", layer_sizes)
         
         if args.conv:
-            model = vgg16_bn(10)
+            model = VGG(10)
         else:
+            print ("Layer sizes:", layer_sizes)
             model = FNN(layer_sizes, activation=activation, seed=i).to(device)
         print ("Loaded model to", str(device)) 
         

@@ -20,9 +20,9 @@ class VGG(nn.Module):
     #[(3,64),(64,64),(64,128),(128,128),(128,256),(256,256),(256,256),(256,512),(512,512),(512,512),(512,512),(512,512),(512,512)]
     #[(25088,4096),(4096,4096),(4096,1000)]
 
-    def __init__(self, vgg_net, num_classes=10):
+    def __init__(self, num_classes=10):
         super().__init__()
-        self.vgg_net = vgg_net
+        self.vgg_net = vgg16_bn()
         self.final_layer = nn.Linear(4096, num_classes)
 
         self.layer_indices = [(2,5,9,12,16,19,22,26,29,32,36,39,42), (2,5,8)]
@@ -34,6 +34,8 @@ class VGG(nn.Module):
         activations = []
 
         for idx, feat in enumerate(features):
+            print (x.shape)
+            print (feat(x).shape)
             x = feat(x) 
             if idx in self.layer_indices[0]:
                 activations.append(x)

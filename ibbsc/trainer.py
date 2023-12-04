@@ -140,7 +140,7 @@ class Trainer:
         return n_corr 
     
     
-    def train(self, train_loader, test_loader, act_loader):
+    def train(self, train_loader, test_loader, act_loader, reshape=False):
         self.model.apply(self.init_weights) #Init kernel weights
         for epoch in range(1, self.epochs+1):
             ### START MAIN TRAIN LOOP ###
@@ -149,6 +149,12 @@ class Trainer:
             acc_train = 0
             for train_data, label in train_loader: 
                 train_data, label  = train_data.to(self.device), label.long().to(self.device)
+                print (train_data.shape, 'shape')
+                
+                if reshape:
+                    train_data = F.interpolate(train_data, size=(64,64))
+                    print (train_data.shape, 'shape')
+
                 yhat, yhat_softmax, _ = self.model(train_data)
                 loss = self.loss_function(yhat, label)
                 acc_train += self.get_number_correct(yhat_softmax, label)
