@@ -160,7 +160,7 @@ class Trainer:
             self.error_train.append(1-acc_train)
             train_loss = train_loss / len(train_loader.dataset)
             self.train_loss.append(train_loss)
-            if epoch % 100 == 0:
+            if epoch % 20 == 0:
                 print('Epoch: {} Train loss: {:.7f},  Train Acc. {:.4f}'.format(epoch, train_loss, acc_train))
             ### STOP MAIN TRAIN LOOP ###
         

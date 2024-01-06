@@ -68,3 +68,11 @@ python main.py -a=tanh -bs=256 -lr=0.0004 -sp="../data/saved_data" -num=40 -mi="
 cd ibbsc  
 python main.py -a=tanh -bs=256 -lr=0.0004 -sp="../data/saved_data" -num=40 -mi="[fixed,adaptive]" -nb="[30,100]" -pr=1 
 ```
+
+#TODO
+```
+python main.py -a relu --try_gpu 1 -nb "[30]" -ls "[784,64,64,64,64,64,10]" -bs 128
+python main.py -a relu --try_gpu 1 -nb "[30]" -ls "[784,64,64,64,64,64,10]" -bs 128 --y_pred
+python main.py -a relu --try_gpu 1 -nb "[30]" -ls "[784,64,2,64,2,64,10]" -bs 128
+python main.py -a relu --try_gpu 1 -nb "[30]" -ls "[784,64,2,64,2,64,10]" -bs 128 --y_pred
+```
