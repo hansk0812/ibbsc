@@ -50,7 +50,8 @@ def prepare_data(data_path, test_size, seed, batch_size):
     Returns:
         [type]: [description]
     """
-    X_train, X_test, y_train, y_test = data_utils.load_data(data_path, test_size, seed)
+    #X_train, X_test, y_train, y_test = data_utils.load_data(data_path, test_size, seed)
+    X_train, X_test, y_train, y_test = data_utils.load_data_mnist(data_path, test_size, seed)
 
     # Prepare data for pytorch
     if batch_size != "full":
