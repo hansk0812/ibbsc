@@ -150,7 +150,7 @@ class Trainer:
             for train_data, label in train_loader: 
                 train_data, label  = train_data.to(self.device), label.long().to(self.device)
                 yhat, yhat_softmax, _ = self.model(train_data)
-                loss = self.loss_function(yhat_softmax, label)
+                loss = self.loss_function(yhat, label)
                 acc_train += self.get_number_correct(yhat_softmax, label)
                 self.opt.zero_grad()
                 loss.backward()
