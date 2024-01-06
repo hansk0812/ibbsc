@@ -70,6 +70,9 @@ def default_params():
     args.save_max_vals = bool(args.save_max_vals)
     if args.batch_size != "full":
         args.batch_size = int(args.batch_size)
+    
+    if not args.y_pred:
+        args.y_pred = None
 
     return args
 
